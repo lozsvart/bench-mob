@@ -1,8 +1,11 @@
-package com.epam.bench.mob;
+ package com.epam.bench.mob;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-import org.junit.jupiter.api.Assertions;
+import org.hamcrest.Matchers;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,22 +27,131 @@ public class BowlingGameTest
     @Test
     public void gutterGame_shouldScoreZero() throws Exception
     {
-//        for( int i = 0; i < 20; ++i ) {
-            mockMvc.perform(post("/pins").content("{ \"pins\": 0 }"))
-              .andExpect(MockMvcResultMatchers.status().is(204));
-//        }
+        doReset();
+
+        for( int i = 0; i < 20; ++i ) {
+            roll(0);
+        }
+
+        assertScore(0);
     }
 
     @Test
-    public void pinsShouldReturn204() throws Exception { 
-        mockMvc.perform(post("/pins").content("{ \"pins\": 0 }"))
+    public void normalGame_shouldAddThePins() throws Exception
+    {
+        doReset();
+
+        for( int i = 0; i < 20; ++i ) {
+            roll(4);
+        }
+
+        assertScore(80);
+    }
+
+    @Test
+    public void spare_shouldDoubleNextRoll() throws Exception
+    {
+        doReset();
+
+        roll(4);
+        roll(6);
+        roll(1);
+
+        assertScore(12);
+    }
+
+    @Test
+    public void spare_shouldNotDoubleSubsequentRoll() throws Exception
+    {
+        doReset();
+
+        roll(4);
+        roll(6);
+        roll(4);
+        roll(5);
+        roll(4);
+
+        assertScore(27);
+    }
+
+    @Test
+    public void strike_shouldDoubleNextTwoRolls() throws Exception
+    {
+        doReset();
+
+        roll(10);
+        roll(6);
+        roll(1);
+
+        assertScore(24);
+    }
+
+    @Test
+    public void full_strike_shouldScore300() throws Exception
+    {
+        doReset();
+
+        for (int i = 0; i < 12; i++) {
+            roll(10);
+        }
+
+        assertScore(300);
+    }
+
+    @Test
+    public void reset_shouldReturn204() throws Exception {
+        mockMvc.perform(post("/reset"))
             .andExpect(MockMvcResultMatchers.status().is(204));
+    }
+
+    @Test
+    public void resetAndScore_shouldReturn0() throws Exception {
+        doReset();
+        assertScore(0);
+    }
+
+    
+
+    @Test
+    public void pinsShouldReturn204() throws Exception { 
+        mockMvc.perform(post("/pins").content("{ \"pins\": 0 }")
+            .contentType("application/json"))
+            .andExpect(MockMvcResultMatchers.status().is(204));
+    }
+
+    @Test
+    public void nonZeroPinsShouldScoreTheSame() throws Exception {
+        doReset();
+        roll(10);
+        assertScore(10);
+    }
+
+
+    private void doReset() throws Exception {
+        mockMvc.perform(post("/reset"));
+    }
+
+    private void roll(Integer pins) throws Exception {
+        mockMvc.perform(post("/pins").content("{ \"pins\":" + pins + "}")
+            .contentType("application/json"))
+            .andExpect(MockMvcResultMatchers.status().is(204));
+    }
+
+    private void assertScore(Integer score) throws Exception {
+        mockMvc.perform(get("/score"))
+            .andExpect(MockMvcResultMatchers.status().is(200))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.score", Matchers.equalTo(score)));
     }
 
 
 }
 
 ///Bowling service:
+
+//One endpoint for resetting
+//POST /reset
+//request payload: null
+//response: HTTP 204 NO CONTENT
 
 //One endpoint for inputting how many pins were knocked down
 //POST /pins
