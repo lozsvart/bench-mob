@@ -16,35 +16,42 @@ public class BowlingGame {
     int score;
     boolean isFirstRoll;
     int firstRollScore;
-    int doubleCount;
+    int[] multipliers = new int[21];
+    int frameCount = 1;
+    int rollIndex = 0;
 
     @PostMapping("/pins")
     public ResponseEntity<Void> pins(@RequestBody Map<String, Object> body) {
         int roll = (Integer) body.get("pins");
-        score += roll;
-        if (doubleCount > 0) {
-            score += roll;
-        }
-        doubleCount = Math.max(doubleCount-1, 0);
+        score += roll * multipliers[rollIndex];
         if (isStrike(roll)) {
-            doubleCount = 2;
+            increaseMultipliersForNextRoll(2);
+            frameCount += 1;
         } else if (isSpare(roll)) {
-            doubleCount = 1;
+            increaseMultipliersForNextRoll(1);
+            frameCount += 1;
             isFirstRoll = !isFirstRoll;
         } else {
             if (isFirstRoll) {
                 firstRollScore = roll;
+            } else {
+                frameCount += 1;
             }
-        isFirstRoll = !isFirstRoll;
+            isFirstRoll = !isFirstRoll;
         }
+        rollIndex++;
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     } 
 
     @PostMapping("/reset")
     public ResponseEntity<Void> reset() {
+        for (int i = 0; i<21;i++) {
+            this.multipliers[i] = 1;
+        }
+        frameCount = 1;
+        rollIndex = 0;
         score = 0;
         isFirstRoll = true;
-        doubleCount = 0;
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -61,4 +68,9 @@ public class BowlingGame {
         return firstRollScore + roll == PINS_AT_START && !isFirstRoll;
     }
 
+    private void increaseMultipliersForNextRoll(int numOfRolls) {
+        if (frameCount < 10)
+            for( int i = 1; i <= numOfRolls; ++i)
+                multipliers[rollIndex + i] += 1;
+    }
 }
