@@ -37,4 +37,8 @@ public class Frame {
         rollNumber++;
     }
 
+    public int getScore() {
+        return MAX_PINS - pins;
+    }
+
 }

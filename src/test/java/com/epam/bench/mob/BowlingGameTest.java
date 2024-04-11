@@ -1,6 +1,7 @@
 package com.epam.bench.mob;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +27,18 @@ public class BowlingGameTest {
         rollMany(game, 1, 20);
 
         assertEquals(20, game.getScore());
+    }
+
+    @Test
+    @Disabled
+    void spareShouldDoubleTheNextRoll() {
+
+        game.roll(5);
+        game.roll(5);
+        game.roll(1);
+        rollMany(game, 0, 17);
+
+        assertEquals(12, game.getScore());
     }
 
     private static void rollMany(BowlingGame game, int rollValue, int times) {
