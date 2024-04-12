@@ -30,11 +30,17 @@ public class Frame {
     }
 
     public void roll(int value) {
+        if ((rollNumber >= 2 && bonus == null) || rollNumber >= 3) {
+            return;
+        }
         pins -= value;
-        if (rollNumber == 0 && pins == 0) {
-            bonus = Bonus.STRIKE;
+        if (rollNumber == 1 && pins == 0) {
+            bonus = Bonus.SPARE;
         }
         rollNumber++;
+        if (previousFrame != null) {
+            previousFrame.roll(value);
+        }
     }
 
     public int getScore() {
